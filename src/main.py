@@ -18,7 +18,6 @@ pygame.init()
 
 def get_asset_path(asset_name): # Platform neutral
     return os.path.join("../assets", asset_name)
-BG_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("background.png")))
 #TODO: allow rescalablity
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
@@ -78,7 +77,7 @@ class Bird(pygame.sprite.Sprite):
 
 
 class Ground(pygame.sprite.Sprite):
-    VELOCITY = -5
+    VELOCITY = -7
     Y_POS = 710
     GROUND_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("ground.png")))
 
@@ -102,13 +101,38 @@ class Ground(pygame.sprite.Sprite):
         self.move()
 
 
+class Background(pygame.sprite.Sprite):
+    BG_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("background.png")))
+    Y_POS = -100
+    VELOCITY = -1
+    def __init__(self, x):
+        super().__init__()
+        self.x = x
+        self.y = Background.Y_POS
+
+        self.image = Background.BG_IMG.convert()
+        self.rect = self.image.get_rect(topleft = (self.x, self.y))
+
+
+    def move(self):
+        self.rect.x += Background.VELOCITY
+
+        if self.rect.right <= 0:
+            self.rect.left += self.image.get_width() * 2
+    def update(self):
+        self.move()
+
+
 
 
 def main():
     screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-    BG_IMG.convert()
     player_group = pygame.sprite.GroupSingle()
     player_group.add(Bird(200, 200))
+    bg_group = pygame.sprite.Group(
+        Background(0),
+        Background(Background.BG_IMG.get_width())
+    )
     ground_group = pygame.sprite.Group(
     Ground(0),
         Ground(Ground.GROUND_IMG.get_width())
@@ -127,14 +151,17 @@ def main():
 
 
 
-        screen.blit(BG_IMG, (0, -100))
+        # screen.blit(BG_IMG, (0, -100))
         # screen.blit(GROUND_IMG, (0, 710))
+        bg_group.update()
+        bg_group.draw(screen)
 
         player_group.update(events)
         player_group.draw(screen)
 
         ground_group.update()
         ground_group.draw(screen)
+
 
         pygame.display.update()
         clock.tick(60) # Setting max framerate
