@@ -1,3 +1,5 @@
+import random
+
 import pygame
 import neat
 from sys import exit
@@ -27,9 +29,10 @@ class Bird(pygame.sprite.Sprite):
     FRAME_1 = pygame.transform.scale2x(pygame.image.load(get_asset_path("bird_frame_1.png")))
     FRAME_2 = pygame.transform.scale2x(pygame.image.load(get_asset_path("bird_frame_2.png")))
     FRAME_3 = pygame.transform.scale2x(pygame.image.load(get_asset_path("bird_frame_3.png")))
-    FLAP_STRENGTH = 18
+    FLAP_STRENGTH = 15
     FLAP_TILT = 25
     NEGATIVE_TILT_EXPO = 1.24
+    ANIMATION_SPEED = 0.3
 
     def __init__(self, x, y):
         super().__init__()
@@ -37,7 +40,7 @@ class Bird(pygame.sprite.Sprite):
         self.x = x
         self.y = y
 
-        self.frames = [Bird.FRAME_1.convert_alpha(), Bird.FRAME_2.convert_alpha(), Bird.FRAME_3.convert_alpha()]
+        self.frames = [Bird.FRAME_1.convert_alpha(), Bird.FRAME_2.convert_alpha(), Bird.FRAME_3.convert_alpha(), Bird.FRAME_2.convert_alpha()] # Smooth animation
         self.animation_index = 0
         self.tilt = 0
 
@@ -51,7 +54,7 @@ class Bird(pygame.sprite.Sprite):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 self.flap()
 
-    def flap(self):
+    def flap(self): # TODO: Apply parabolic gravity
         self.gravity = -1 * Bird.FLAP_STRENGTH
     def apply_gravity(self):
         self.rect.y += self.gravity
@@ -59,6 +62,13 @@ class Bird(pygame.sprite.Sprite):
         # print(self.gravity)
 
     def animate(self):
+        if self.tilt >= -15:
+            self.animation_index += Bird.ANIMATION_SPEED
+            if self.animation_index >= len(self.frames): self.animation_index = 0
+            self.image = self.frames[int(self.animation_index)] # No need to remake rect, frames are same sizes
+        else:
+            self.image = self.frames[1]
+
         if self.gravity < 0: # Head tilt up while going upwards
             self.tilt = Bird.FLAP_TILT
         else: # Falling downwards, exponentially rotate
@@ -67,7 +77,7 @@ class Bird(pygame.sprite.Sprite):
             if self.tilt < -90:
                 self.tilt = -90
 
-        self.image = pygame.transform.rotate(self.frames[self.animation_index], self.tilt) # Do not repeatedly rotate same image
+        self.image = pygame.transform.rotate(self.frames[int(self.animation_index)], self.tilt) # Do not repeatedly rotate same image
         self.rect = self.image.get_rect(center = self.rect.center)
     def update(self, events):
         self.get_player_input(events)
@@ -75,9 +85,8 @@ class Bird(pygame.sprite.Sprite):
         self.animate()
         # Animate
 
-
 class Ground(pygame.sprite.Sprite):
-    VELOCITY = -7
+    VELOCITY = -5
     Y_POS = 710
     GROUND_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("ground.png")))
 
@@ -100,7 +109,6 @@ class Ground(pygame.sprite.Sprite):
     def update(self):
         self.move()
 
-
 class Background(pygame.sprite.Sprite):
     BG_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("background.png")))
     Y_POS = -100
@@ -122,8 +130,65 @@ class Background(pygame.sprite.Sprite):
     def update(self):
         self.move()
 
+class Pipe:
+    PIPE_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("pipe.png")))
+    VELOCITY = Ground.VELOCITY
+    GAP = 200 # TODO change to account for bad movement
+    def __init__(self, x):
+        pass
+        self.x = x
+        self.height = 0
+        self.top_y = 0
+        self.bottom_y = 0
+        self.set_heights()
+
+        self.top_pipe = Pipe.TopPipe(self.x, self.top_y) # Coordinates of bottom left
+        self.bottom_pipe = Pipe.BottomPipe(self.x, self.bottom_y)
+        self.pipe_group = pygame.sprite.Group(
+            self.top_pipe,
+            self.bottom_pipe
+        )
+
+    def set_heights(self):
+        # Testing found 50 - 450 to account for all valid ranges
+        self.height = random.randint(50, 450)
+        self.top_y = self.height
+        self.bottom_y = self.height + Pipe.GAP
 
 
+    def update(self):
+        self.top_pipe.update()
+        self.bottom_pipe.update()
+
+    def draw(self, screen):
+        self.pipe_group.draw(screen)
+
+
+    class TopPipe(pygame.sprite.Sprite):
+
+        def __init__(self, x, y):
+            super().__init__()
+            self.x = x
+            self.y = y
+            self.image = pygame.transform.flip(Pipe.PIPE_IMG.convert_alpha(), False, True)
+            self.rect = self.image.get_rect(bottomleft = (self.x, self.y))
+
+        def update(self):
+            self.rect.x += Pipe.VELOCITY
+
+
+
+    class BottomPipe(pygame.sprite.Sprite):
+
+        def __init__(self, x, y):
+            super().__init__()
+            self.x = x
+            self.y = y
+            self.image = Pipe.PIPE_IMG.convert_alpha()
+            self.rect = self.image.get_rect(topleft = (self.x, self.y))
+
+        def update(self):
+            self.rect.x += Pipe.VELOCITY
 
 def main():
     screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
@@ -137,6 +202,8 @@ def main():
     Ground(0),
         Ground(Ground.GROUND_IMG.get_width())
     )
+
+    pipes = [Pipe(400), Pipe(800)]
     clock = pygame.time.Clock() # Will help limit framerate for consistency
 
 
@@ -150,17 +217,20 @@ def main():
             #     player_group.sprite.gravity = -20
 
 
-
-        # screen.blit(BG_IMG, (0, -100))
-        # screen.blit(GROUND_IMG, (0, 710))
         bg_group.update()
         bg_group.draw(screen)
 
         player_group.update(events)
         player_group.draw(screen)
 
+
+        for pipe in pipes:
+            pipe.update()
+            pipe.draw(screen)
+
         ground_group.update()
         ground_group.draw(screen)
+
 
 
         pygame.display.update()
