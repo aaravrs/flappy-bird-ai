@@ -23,13 +23,14 @@ def get_asset_path(asset_name): # Platform neutral
 #TODO: allow rescalablity
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
-
+BIRD_X = 230
+BIRD_Y = 350
 
 class Bird(pygame.sprite.Sprite):
     FRAME_1 = pygame.transform.scale2x(pygame.image.load(get_asset_path("bird_frame_1.png")))
     FRAME_2 = pygame.transform.scale2x(pygame.image.load(get_asset_path("bird_frame_2.png")))
     FRAME_3 = pygame.transform.scale2x(pygame.image.load(get_asset_path("bird_frame_3.png")))
-    FLAP_STRENGTH = 15
+    FLAP_STRENGTH = 14
     FLAP_TILT = 25
     NEGATIVE_TILT_EXPO = 1.24
     ANIMATION_SPEED = 0.3
@@ -86,7 +87,7 @@ class Bird(pygame.sprite.Sprite):
         # Animate
 
 class Ground(pygame.sprite.Sprite):
-    VELOCITY = -5
+    VELOCITY = -4
     Y_POS = 710
     GROUND_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("ground.png")))
 
@@ -141,6 +142,8 @@ class Pipe:
         self.top_y = 0
         self.bottom_y = 0
         self.set_heights()
+        self.passed = False
+        self.scored = False
 
         self.top_pipe = Pipe.TopPipe(self.x, self.top_y) # Coordinates of bottom left
         self.bottom_pipe = Pipe.BottomPipe(self.x, self.bottom_y)
@@ -159,11 +162,16 @@ class Pipe:
     def update(self):
         self.top_pipe.update()
         self.bottom_pipe.update()
+        # BIRD_X is const
+        if self.top_pipe.rect.centerx < BIRD_X: self.passed = True
+
 
     def draw(self, screen):
         self.pipe_group.draw(screen)
 
-
+    # def check_status(self):
+    #     if self.top_pipe.rect.x <= -100:
+    #         self.kill()
     class TopPipe(pygame.sprite.Sprite):
 
         def __init__(self, x, y):
@@ -175,8 +183,6 @@ class Pipe:
 
         def update(self):
             self.rect.x += Pipe.VELOCITY
-
-
 
     class BottomPipe(pygame.sprite.Sprite):
 
@@ -193,7 +199,7 @@ class Pipe:
 def main():
     screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     player_group = pygame.sprite.GroupSingle()
-    player_group.add(Bird(200, 200))
+    player_group.add(Bird(BIRD_X, BIRD_Y))
     bg_group = pygame.sprite.Group(
         Background(0),
         Background(Background.BG_IMG.get_width())
@@ -203,9 +209,13 @@ def main():
         Ground(Ground.GROUND_IMG.get_width())
     )
 
-    pipes = [Pipe(400), Pipe(800)]
-    clock = pygame.time.Clock() # Will help limit framerate for consistency
+    score = 0
+    pipes = []
+    # Timer to spawn pipes
+    pipe_timer = pygame.USEREVENT + 1
+    pygame.time.set_timer(pipe_timer, 1500)
 
+    clock = pygame.time.Clock() # Will help limit framerate for consistency
 
     while True:
         events = pygame.event.get()
@@ -213,15 +223,30 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-            # if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            #     player_group.sprite.gravity = -20
+            # TODO separate logic based on game activity
+            if event.type == pipe_timer:
+                pipes.append(Pipe(WIN_WIDTH))
 
 
+
+        print(f"Score: {score}")
         bg_group.update()
         bg_group.draw(screen)
 
         player_group.update(events)
         player_group.draw(screen)
+
+        # Add pipes that have passed to remove list, but dont delete them until off screen
+
+        pipes_to_remove = []
+        for pipe in pipes:
+            if  pipe.top_pipe.rect.left + Pipe.PIPE_IMG.get_width() < 0:
+                pipes_to_remove.append(pipe)
+            if pipe.passed and not pipe.scored:
+                print("PASSED")
+                score += 1
+                pipe.scored = True
+
 
 
         for pipe in pipes:
@@ -232,6 +257,8 @@ def main():
         ground_group.draw(screen)
 
 
+        for pipe_to_remove in pipes_to_remove:
+            pipes.remove(pipe_to_remove)
 
         pygame.display.update()
         clock.tick(60) # Setting max framerate
