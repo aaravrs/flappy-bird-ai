@@ -11,6 +11,7 @@ class Pipe:
 
     # Movement
     VELOCITY = Ground.VELOCITY
+    SPAWN_TIME = 1500 # ms
 
     def __init__(self, x):
         pass

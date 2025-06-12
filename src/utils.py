@@ -7,3 +7,4 @@ def get_asset_path(type, asset_name): # Platform neutral
 
 
 #TODO pixel perfect collision
+# https://stackoverflow.com/questions/48025283/pixel-perfect-collision-detection-for-sprites-with-a-transparent-background

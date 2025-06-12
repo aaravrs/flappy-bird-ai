@@ -34,8 +34,11 @@ class Bird(pygame.sprite.Sprite):
     def get_player_input(self, events):
         # TODO sound
         for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE: # Space bar
                 self.flap()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Left click
+                self.flap()
+
 
     def flap(self): # TODO: Apply parabolic gravity
         self.gravity = -1 * Bird.FLAP_STRENGTH
