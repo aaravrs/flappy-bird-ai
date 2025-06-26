@@ -1,3 +1,5 @@
+import random
+
 import pygame
 from utils import get_asset_path
 import utils
@@ -76,6 +78,6 @@ class Bird(pygame.sprite.Sprite):
             self.animate()
         else:
             self.get_player_input(events)
-            if self.rect.bottom < 720: # Stop moving the bird after hitting the ground
+            if self.rect.bottom < random.randint(715, 730): # Stop moving the bird after hitting the ground
                 self.apply_gravity()
             self.animate()

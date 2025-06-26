@@ -4,7 +4,6 @@ import pygame_widgets
 import neat
 from sys import exit # Platform neutral (not all interpreters have exit()/quit() by default)
 import os
-from enum import Enum
 
 # Local imports
 from background import Background
@@ -15,6 +14,7 @@ from utils import get_asset_path
 import utils
 
 # TODO: dpi scaling issue
+# TODO: organize assets into grouped folders
 # TODO: export game to exe
 # TODO separate logic based on game activity
 # TODO: allow rescalablity
@@ -32,7 +32,11 @@ WIN_WIDTH = 500
 WIN_HEIGHT = 800
 MAX_FRAME_RATE = 60
 
-screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+# Helper
+WIN_CENTER_X = WIN_WIDTH // 2
+WIN_CENTER_Y = WIN_HEIGHT // 2
+
+screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT)) # TODO: remove from methods
 pygame.display.set_caption("Flappy Bird AI")
 
 # TODO: move to utils class
@@ -43,7 +47,7 @@ class Logo(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = Logo.IMAGE.convert_alpha()
-        self.rect = self.image.get_rect(center = (WIN_WIDTH // 2, 200))
+        self.rect = self.image.get_rect(center = (WIN_CENTER_X, 200))
 
     def update(self):
         self.image = self.image
@@ -65,12 +69,6 @@ volume_slider = Slider(screen, 50, WIN_HEIGHT - 100,
                        min=0, max=100, initial=utils.VOLUME,
                        colour=(100, 100, 100), handleColour=(200, 200, 200), handleRadius=10)
 
-
-class GameState(Enum):
-    MENU = 0
-    PLAYING_P = 1
-    PLAYER_AI = 2
-    SETTINGS = 3
 
 class Button(pygame.sprite.Sprite):
     HOVER_OPACITY = 0.5
@@ -109,14 +107,11 @@ class Button(pygame.sprite.Sprite):
             pygame.draw.rect(screen, (0, 0, 0), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
             self.image = self.DEFAULT_TEXT
 
-def test_func():
-    print("Button pressed")
-
-def display_stats(screen, score, fps, volume):
+def display_stats(score, fps, volume):
     def display_score(score):
         if score != None:
             score_surf = utils.font_fb[12].render(f"{score}", False, (255, 255, 255))
-            score_rect = score_surf.get_rect(center=(WIN_WIDTH // 2, 100))
+            score_rect = score_surf.get_rect(center=(WIN_CENTER_X, 100))
             score_surf_border = pygame.transform.scale_by(utils.font_fb[12].render(f"{score}", False, (0, 0, 0)), 1.1)
             screen.blit(score_surf_border, score_rect)  # Used to make an outline/shadow effect
             screen.blit(score_surf, score_rect)
@@ -129,13 +124,12 @@ def display_stats(screen, score, fps, volume):
     def display_volume(volume):
         if volume != None:
             volume_text = utils.font_menu[12].render(f"{utils.VOLUME}", False, (50, 50, 200))
-            volume_rect = volume_text.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT - 50))
+            volume_rect = volume_text.get_rect(center=(WIN_CENTER_X, WIN_HEIGHT - 50))
             screen.blit(volume_text, volume_rect)
 
     display_score(score)
     display_fps(fps)
     display_volume(volume)
-
 
 def menu_main():
     player_group = pygame.sprite.GroupSingle()
@@ -143,9 +137,9 @@ def menu_main():
 
     clock = pygame.time.Clock() # Used to set maximum framerate
 
-    play_button = Button("Play", 12, (WIN_WIDTH // 2, WIN_HEIGHT // 2 ), menu_play)
-    customize_button = Button("COMING SOON", 10, (WIN_WIDTH // 2, WIN_HEIGHT // 2 + 100), menu_play)
-    exit_button = Button("Exit", 7, (WIN_WIDTH // 2, WIN_HEIGHT // 2 + 200), exit)
+    play_button = Button("Play", 12, (WIN_CENTER_X, WIN_CENTER_Y), menu_play)
+    customize_button = Button("COMING SOON", 10, (WIN_CENTER_X, WIN_CENTER_Y + 100), menu_play)
+    exit_button = Button("Exit", 7, (WIN_CENTER_X, WIN_CENTER_Y + 200), exit)
 
     button_group = pygame.sprite.Group(
         play_button,
@@ -180,7 +174,7 @@ def menu_main():
         utils.update_volume()
 
 
-        display_stats(screen, None, fps, utils.VOLUME)
+        display_stats(None, fps, utils.VOLUME)
         pygame_widgets.update(events)
         pygame.display.update()
         clock.tick(MAX_FRAME_RATE) # Setting max framerate
@@ -191,9 +185,9 @@ def menu_play():
 
     clock = pygame.time.Clock() # Used to set maximum framerate
 
-    human_button = Button("Human", 12, (WIN_WIDTH // 2, WIN_HEIGHT // 2), game_player)
-    ai_button = Button("AI (Neural Network)", 12, (WIN_WIDTH // 2, WIN_HEIGHT // 2 + 100), game_ai)
-    back_button = Button("Back", 7, (WIN_WIDTH // 2, WIN_HEIGHT // 2 + 200), menu_main)
+    human_button = Button("Human", 12, (WIN_CENTER_X, WIN_CENTER_Y), game_player)
+    ai_button = Button("AI (Neural Network)", 12, (WIN_CENTER_X, WIN_CENTER_Y + 100), game_ai)
+    back_button = Button("Back", 7, (WIN_CENTER_X, WIN_CENTER_Y + 200), menu_main)
 
     button_group = pygame.sprite.Group(
         human_button,
@@ -228,17 +222,22 @@ def menu_play():
         utils.update_volume()
 
         pygame_widgets.update(events)
-        display_stats(screen, None, fps, utils.VOLUME)
+        display_stats(None, fps, utils.VOLUME)
         pygame.display.update()
         clock.tick(MAX_FRAME_RATE) # Setting max framerate
 
 def game_player():
+    gameover = False
+    # TODO: highscore
+
+    # Initializing bird sprite
     player_group = pygame.sprite.GroupSingle()
     player_group.add(Bird())
     bird = player_group.sprite # Reference/pointer to player bird
 
     score = 0
     pipes = []
+    next_pipe = None
 
     # Timer to spawn pipes
     pipe_timer = pygame.USEREVENT + 1
@@ -253,22 +252,35 @@ def game_player():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-            if event.type == pipe_timer:
+            if event.type == pipe_timer and bird.alive:
                 pipes.append(Pipe(WIN_WIDTH))
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    game_player()
+                if event.key == pygame.K_m:
+                    menu_main()
 
 
+
+        # Background: movement + draw
         if bird.alive: bg_group.update()
         bg_group.draw(screen)
 
+        # Player bird: movement + draw
         player_group.update(events)
         player_group.draw(screen)
 
         pipes_to_remove = []
 
-
-
-        # TODO: add death to ground & pipe
         for pipe in pipes:
+
+            if bird.alive: # Move pipe if bird is alive
+                pipe.update()
+
+            if  pipe.top_pipe.rect.right < 0:
+                pipes_to_remove.append(pipe) # Remove pipe when out of screen
+
+            # Collision
             if (bird.alive and
                     (pygame.sprite.collide_mask(player_group.sprite, pipe.top_pipe) or
                      pygame.sprite.collide_mask(player_group.sprite, pipe.bottom_pipe))): # TODO: optimize, new mask each time
@@ -276,23 +288,7 @@ def game_player():
                 utils.audio_hit.play()
                 utils.audio_die.play()
 
-        for ground_sprite in ground_group.sprites():
-            if bird.alive and pygame.sprite.collide_mask(player_group.sprite, ground_sprite): # TODO: optimize, new mask each time
-                player_group.sprite.alive = False
-                utils.audio_hit.play()
-
-
-        for pipe in pipes:
-            # pygame.draw.line(screen, (255, 0, 0), bird.rect.center,
-            #                  pipe.top_pipe.rect.midbottom)
-            # pygame.draw.line(screen, (255, 0, 0), bird.rect.center,
-            #                  pipe.bottom_pipe.rect.midtop)
-
-            if bird.alive: pipe.update()
-
-            if  pipe.top_pipe.rect.right < 0:
-                pipes_to_remove.append(pipe) # Remove pipe when out of screen
-
+            # Scoring
             if pipe.passed and not pipe.scored: # Only score once per pipe
                 score += 1
                 pipe.scored = True
@@ -300,20 +296,80 @@ def game_player():
 
             pipe.draw(screen)
 
-
-
+        # Ground: movement + draw
         if bird.alive: ground_group.update()
         ground_group.draw(screen)
+
+        # Ground collision
+        for ground_sprite in ground_group.sprites():
+            # Bird dies to floor
+            if bird.alive and pygame.sprite.collide_mask(player_group.sprite, ground_sprite): # TODO: optimize, new mask each time
+                player_group.sprite.alive = False
+                utils.audio_hit.play()
+
+            # Gameover: when the bird hits the floor
+            if pygame.sprite.collide_mask(player_group.sprite, ground_sprite): # TODO: optimize, new mask each time
+                gameover = True
 
         for pipe_to_remove in pipes_to_remove: # Removing off-screen pipes
             pipes.remove(pipe_to_remove)
 
-        display_stats(screen, score, fps, None)
+        if gameover:
+            display_gameover(score, events)
+            display_stats(None, fps, None)
+        else:
+            display_stats(score, fps, None)
+
         pygame.display.update()
         clock.tick(MAX_FRAME_RATE) # Setting max framerate
 
+def display_gameover(score, events):
+    gameover = pygame.transform.scale_by(pygame.image.load(get_asset_path("images", "gameover.png")), 2).convert_alpha()
+    gameover_rect = gameover.get_rect(center=(WIN_CENTER_X, WIN_CENTER_Y - 300))
+
+    score_shadow = utils.get_shadow_font(13, f"Score: {score}", utils.Font.FB,
+                                           False, (255, 255, 255), (0, 0, 0),
+                                           (WIN_CENTER_X, WIN_CENTER_Y - 200))
+
+    highscore_shadow = utils.get_shadow_font(13, f"HighScore: {score}", utils.Font.FB,
+                                         False, (255, 255, 255), (0, 0, 0),
+                                         (WIN_CENTER_X, WIN_CENTER_Y - 100))
+
+    restart_button = Button("Restart", 15, (WIN_CENTER_X, WIN_CENTER_Y + 50), game_player)
+    menu_button = Button("Menu", 12, (WIN_CENTER_X, WIN_CENTER_Y + 150), menu_main)
+
+    button_group = pygame.sprite.Group(
+        restart_button,
+        menu_button
+    )
+
+    button_group.update(screen, events)
+    button_group.draw(screen)
+
+
+    screen.blit(gameover, gameover_rect)
+
+    screen.blit(score_shadow["shadow"]["surf"], score_shadow["shadow"]["rect"])
+    screen.blit(score_shadow["base"]["surf"], score_shadow["base"]["rect"])
+
+    screen.blit(highscore_shadow["shadow"]["surf"], highscore_shadow["shadow"]["rect"])
+    screen.blit(highscore_shadow["base"]["surf"], highscore_shadow["base"]["rect"])
+
+
+
+
 def game_ai():
     # TODO: mute volume until a certain threshold of birds left
+    # TODO: put in ai mode
+    # if next_pipe != None:
+    #     pygame.draw.line(screen, (255, 0, 0), bird.rect.center,
+    #                      next_pipe.top_pipe.rect.midbottom)
+    #     pygame.draw.line(screen, (255, 0, 0), bird.rect.center,
+    #                      next_pipe.bottom_pipe.rect.midtop)
+    # for pipe in pipes:
+    #     if pipe.top_pipe.rect.centerx > Bird.BIRD_X:
+    #         next_pipe = pipe
+    #         break
     pass
 
 #TODO: Finite state machine to manage scenes (menu, game, ai game)
