@@ -1,5 +1,6 @@
 import pygame
 from utils import get_asset_path
+import utils
 
 class Bird(pygame.sprite.Sprite):
     # Assets
@@ -13,6 +14,8 @@ class Bird(pygame.sprite.Sprite):
 
     # Physics/Movement
     FLAP_STRENGTH = 14
+
+    # Animation
     FLAP_TILT = 25
     NEGATIVE_TILT_EXPO = 1.24
     ANIMATION_SPEED = 0.33
@@ -42,6 +45,7 @@ class Bird(pygame.sprite.Sprite):
 
     def flap(self): # TODO: Apply parabolic gravity
         self.gravity = -1 * Bird.FLAP_STRENGTH
+        utils.audio_flap.play()
 
     def apply_gravity(self):
         self.rect.y += self.gravity
@@ -65,8 +69,11 @@ class Bird(pygame.sprite.Sprite):
 
         self.image = pygame.transform.rotate(self.frames[int(self.animation_index)], self.tilt) # Do not repeatedly rotate same image
         self.rect = self.image.get_rect(center = self.rect.center)
+
     def update(self, events):
-        self.get_player_input(events)
-        self.apply_gravity()
-        self.animate()
-        # Animate
+        if events == None:
+            self.animate()
+        else:
+            self.get_player_input(events)
+            self.apply_gravity()
+            self.animate()
