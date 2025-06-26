@@ -235,6 +235,7 @@ def menu_play():
 def game_player():
     player_group = pygame.sprite.GroupSingle()
     player_group.add(Bird())
+    bird = player_group.sprite # Reference/pointer to player bird
 
     score = 0
     pipes = []
@@ -256,7 +257,7 @@ def game_player():
                 pipes.append(Pipe(WIN_WIDTH))
 
 
-        bg_group.update()
+        if bird.alive: bg_group.update()
         bg_group.draw(screen)
 
         player_group.update(events)
@@ -265,15 +266,33 @@ def game_player():
         pipes_to_remove = []
 
 
+
         # TODO: add death to ground & pipe
+        for pipe in pipes:
+            if (bird.alive and
+                    (pygame.sprite.collide_mask(player_group.sprite, pipe.top_pipe) or
+                     pygame.sprite.collide_mask(player_group.sprite, pipe.bottom_pipe))): # TODO: optimize, new mask each time
+                player_group.sprite.alive = False
+                utils.audio_hit.play()
+                utils.audio_die.play()
+
+        for ground_sprite in ground_group.sprites():
+            if bird.alive and pygame.sprite.collide_mask(player_group.sprite, ground_sprite): # TODO: optimize, new mask each time
+                player_group.sprite.alive = False
+                utils.audio_hit.play()
+
 
         for pipe in pipes:
-            pipe.update()
+            # pygame.draw.line(screen, (255, 0, 0), bird.rect.center,
+            #                  pipe.top_pipe.rect.midbottom)
+            # pygame.draw.line(screen, (255, 0, 0), bird.rect.center,
+            #                  pipe.bottom_pipe.rect.midtop)
 
-            #TODO fix order (update, statements, then draw)
+            if bird.alive: pipe.update()
+
             if  pipe.top_pipe.rect.right < 0:
-                print("Deleted")
-                pipes_to_remove.append(pipe)
+                pipes_to_remove.append(pipe) # Remove pipe when out of screen
+
             if pipe.passed and not pipe.scored: # Only score once per pipe
                 score += 1
                 pipe.scored = True
@@ -281,10 +300,12 @@ def game_player():
 
             pipe.draw(screen)
 
-        ground_group.update()
+
+
+        if bird.alive: ground_group.update()
         ground_group.draw(screen)
 
-        for pipe_to_remove in pipes_to_remove:
+        for pipe_to_remove in pipes_to_remove: # Removing off-screen pipes
             pipes.remove(pipe_to_remove)
 
         display_stats(screen, score, fps, None)

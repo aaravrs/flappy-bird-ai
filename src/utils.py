@@ -27,7 +27,7 @@ def update_volume():
     # TODO: base volume off of factor x original volume
     audio_point.set_volume(0.2 * (VOLUME / 100))
     audio_flap.set_volume(0.4 * (VOLUME / 100))
-    audio_hit.set_volume(0.4 * (VOLUME / 100))
+    audio_hit.set_volume(0.3 * (VOLUME / 100))
     audio_die.set_volume(0.4 * (VOLUME / 100))
 
 

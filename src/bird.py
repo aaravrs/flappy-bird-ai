@@ -34,14 +34,15 @@ class Bird(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center = (self.x, self.y))
         self.gravity = 0
 
-    def get_player_input(self, events):
-        # TODO sound
-        for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE: # Space bar
-                self.flap()
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # Left click
-                self.flap()
+        self.alive = True
 
+    def get_player_input(self, events):
+        for event in events:
+            if self.alive:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:  # Space bar
+                    self.flap()
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Left click
+                    self.flap()
 
     def flap(self): # TODO: Apply parabolic gravity
         self.gravity = -1 * Bird.FLAP_STRENGTH
@@ -71,9 +72,10 @@ class Bird(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center = self.rect.center)
 
     def update(self, events):
-        if events == None:
+        if events == None: # Used for menu screen (static flapping animation)
             self.animate()
         else:
             self.get_player_input(events)
-            self.apply_gravity()
+            if self.rect.bottom < 720: # Stop moving the bird after hitting the ground
+                self.apply_gravity()
             self.animate()

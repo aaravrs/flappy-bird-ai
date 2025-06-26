@@ -40,7 +40,7 @@ class Pipe:
         self.top_pipe.update()
         self.bottom_pipe.update()
         # Crossing center = passed
-        if self.top_pipe.rect.centerx < Bird.BIRD_X: self.passed = True
+        if self.top_pipe.rect.centerx <= Bird.BIRD_X: self.passed = True
 
     def draw(self, screen):
         self.pipe_group.draw(screen)
