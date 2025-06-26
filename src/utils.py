@@ -29,6 +29,7 @@ def load_fonts():
     global font_fb, font_menu
 
     font_fb = []
+    font_menu = []
     for size in FONT_SIZES:
         font_fb.append(pygame.font.Font(get_asset_path("fonts", "04B_19.TTF"), size))
         font_menu.append(pygame.font.Font(get_asset_path("fonts", "ThaleahFat.ttf"), size))

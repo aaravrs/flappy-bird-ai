@@ -42,6 +42,7 @@ class Bird(pygame.sprite.Sprite):
 
     def flap(self): # TODO: Apply parabolic gravity
         self.gravity = -1 * Bird.FLAP_STRENGTH
+
     def apply_gravity(self):
         self.rect.y += self.gravity
         self.gravity += 1

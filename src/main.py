@@ -34,21 +34,31 @@ class GameState(Enum):
 
 class Button(pygame.sprite.Sprite):
     HOVER_OPACITY = 0.5
+    BORDER_INFLATION_X = 50
+    BORDER_INFLATION_Y = 10
+    BORDER_RADIUS = 50
 
-    def __init__(self, text, position, function):
+    def __init__(self, text, text_size, position, function):
+        """Initalizes a button sprite""" #TODO: documentation
+
+
+
         super().__init__()
-        self.DEFAULT_TEXT = utils.font_fb[10].render(text, False, (255, 255, 255))
-        self.HOVER_TEXT = utils.font_fb[10].render(text, False, (155, 155, 155))
+        self.DEFAULT_TEXT = utils.font_menu[text_size].render(text, False, (255, 255, 255))
+        self.HOVER_TEXT = utils.font_menu[text_size].render(text, False, (155, 155, 155))
 
         self.image = self.DEFAULT_TEXT
-        self.rect = self.image.get_rect(topleft = (0, 0))
-        self.function = function
+        self.rect = self.image.get_rect(center = position)
 
+        self.function = function
         pass
 
 
-    def update(self, events):
+    def update(self, screen, events):
+        # Draw the border rectangle before the group.draw method is called
+
         if self.rect.collidepoint(pygame.mouse.get_pos()):
+            pygame.draw.rect(screen, (100, 100, 100), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
             self.image = self.HOVER_TEXT
 
             for event in events:
@@ -56,6 +66,7 @@ class Button(pygame.sprite.Sprite):
                     self.function()
 
         else:
+            pygame.draw.rect(screen, (0, 0, 0), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
             self.image = self.DEFAULT_TEXT
 
 
@@ -73,6 +84,13 @@ def display_stats(screen, score, fps):
         fps_surf = utils.font_fb[5].render(f"{int(round(fps, 0))}", False, (255, 255, 255))
         fps_rect = score_surf.get_rect(topright = (WIN_WIDTH - 10, 10)) # TODO fix glitch
         screen.blit(fps_surf, fps_rect)
+
+
+
+def main_menu():
+    pass
+
+
 
 
 #TODO: Finite state machine to manage scenes (menu, game, ai game)
@@ -102,8 +120,15 @@ def main():
 
 
     #TODO: testing
-    button_group = pygame.sprite.Group()
-    button_group.add(Button("HELLO", (0, 0), test_func))
+    play_button = Button("Play", 12, (WIN_WIDTH // 2, WIN_HEIGHT / 2), test_func)
+    exit_button = Button("Exit", 10, (WIN_WIDTH // 2, WIN_HEIGHT / 2 + 100), exit)
+
+    button_group = pygame.sprite.Group(
+        play_button,
+        exit_button
+    )
+    human_option_button = Button("Play", 12, (WIN_WIDTH // 2, WIN_HEIGHT / 2), test_func)
+    ai_option_button = Button("Play", 12, (WIN_WIDTH // 2, WIN_HEIGHT / 2), test_func)
 
     while True:
         fps = clock.get_fps()
@@ -145,7 +170,7 @@ def main():
             pipes.remove(pipe_to_remove)
 
         #TODO: testing
-        button_group.update(events)
+        button_group.update(screen, events)
         button_group.draw(screen)
 
 
