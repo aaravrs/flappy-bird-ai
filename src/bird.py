@@ -15,7 +15,7 @@ class Bird(pygame.sprite.Sprite):
     FLAP_STRENGTH = 14
     FLAP_TILT = 25
     NEGATIVE_TILT_EXPO = 1.24
-    ANIMATION_SPEED = 0.3
+    ANIMATION_SPEED = 0.33
 
     def __init__(self):
         super().__init__()
@@ -45,10 +45,9 @@ class Bird(pygame.sprite.Sprite):
     def apply_gravity(self):
         self.rect.y += self.gravity
         self.gravity += 1
-        # print(self.gravity)
 
     def animate(self):
-        if self.tilt >= -15:
+        if self.tilt >= -15: # Stops flapping when falling at a steep angle
             self.animation_index += Bird.ANIMATION_SPEED
             if self.animation_index >= len(self.frames): self.animation_index = 0
             self.image = self.frames[int(self.animation_index)] # No need to remake rect, frames are same sizes

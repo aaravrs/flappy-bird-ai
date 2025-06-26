@@ -39,7 +39,7 @@ class Pipe:
     def update(self):
         self.top_pipe.update()
         self.bottom_pipe.update()
-        # BIRD_X is const
+        # Crossing center = passed
         if self.top_pipe.rect.centerx < Bird.BIRD_X: self.passed = True
 
     def draw(self, screen):
