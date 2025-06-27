@@ -6,7 +6,7 @@ from utils import get_asset_path
 
 class Pipe:
     # Assets
-    PIPE_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "pipe.png")))
+    PIPE_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "environment", "pipe.png")))
     GAP = 200 # TODO change to account for bad movement
 
     # Movement

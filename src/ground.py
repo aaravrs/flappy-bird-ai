@@ -4,7 +4,7 @@ import utils
 
 class Ground(pygame.sprite.Sprite):
     # Assets
-    GROUND_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "ground.png")))
+    GROUND_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "environment", "ground.png")))
 
     # Movement
     VELOCITY = -4

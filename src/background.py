@@ -4,7 +4,7 @@ import utils
 
 class Background(pygame.sprite.Sprite):
     # Assets
-    BG_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "background.png")))
+    BG_IMG = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "environment", "background.png")))
 
     # Movement
     Y_POS = -100

@@ -1,2 +1,4 @@
 neat-python==0.92
 pygame==2.6.1
+pygame-widgets==1.2.2
+pyperclip==1.9.0

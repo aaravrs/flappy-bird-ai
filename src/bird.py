@@ -6,9 +6,9 @@ import utils
 
 class Bird(pygame.sprite.Sprite):
     # Assets
-    FRAME_1 = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "bird_frame_1.png")))
-    FRAME_2 = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "bird_frame_2.png")))
-    FRAME_3 = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "bird_frame_3.png")))
+    FRAME_1 = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "bird", "bird_frame_1.png")))
+    FRAME_2 = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "bird", "bird_frame_2.png")))
+    FRAME_3 = pygame.transform.scale2x(pygame.image.load(get_asset_path("images", "bird", "bird_frame_3.png")))
 
     # Spawn location
     BIRD_X = 230

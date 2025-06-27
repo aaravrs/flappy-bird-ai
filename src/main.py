@@ -1,16 +1,29 @@
+# # # # # # # # # # # # # # # MAIN MENU # # # # # # # # # # # # # # #
+
+# Standard library
+from sys import exit # Platform neutral (not all interpreters have exit()/quit() by default)
+
+# Third-party
 import pygame
 from pygame_widgets.slider import Slider
 import pygame_widgets
 import neat
-from sys import exit # Platform neutral (not all interpreters have exit()/quit() by default)
-import os
 
-# Local imports
+# Local
 from background import Background
 from bird import Bird
 from ground import Ground
 from pipe import Pipe
-from utils import get_asset_path
+from utils import (
+    get_asset_path,
+    Button,
+    Logo,
+    WIN_WIDTH,
+    WIN_HEIGHT,
+    WIN_CENTER_X,
+    WIN_CENTER_Y,
+    MAX_FRAME_RATE,
+)
 import utils
 
 # TODO: dpi scaling issue
@@ -28,29 +41,11 @@ utils.load_sounds()
 utils.load_fonts()
 show_fps = True
 
-WIN_WIDTH = 500
-WIN_HEIGHT = 800
-MAX_FRAME_RATE = 60
-
-# Helper
-WIN_CENTER_X = WIN_WIDTH // 2
-WIN_CENTER_Y = WIN_HEIGHT // 2
-
-screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT)) # TODO: remove from methods
+screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Flappy Bird AI")
 
-# TODO: move to utils class
-class Logo(pygame.sprite.Sprite):
-    #TODO: make custom (animated) logo
-    IMAGE = pygame.transform.scale_by(pygame.image.load(get_asset_path("images", "default_logo.png")), 0.18)
 
-    def __init__(self):
-        super().__init__()
-        self.image = Logo.IMAGE.convert_alpha()
-        self.rect = self.image.get_rect(center = (WIN_CENTER_X, 200))
-
-    def update(self):
-        self.image = self.image
+#TODO: organize into "init_menu" function
 
 # The global groups allows a seamless transition between the menu and the game
 bg_group = pygame.sprite.Group(
@@ -64,48 +59,12 @@ ground_group = pygame.sprite.Group(
 logo_group = pygame.sprite.GroupSingle(
     Logo()
 )
-volume_slider = Slider(screen, 50, WIN_HEIGHT - 100,
+volume_slider = Slider(screen, WIN_WIDTH // 2 - (400 / 2), WIN_HEIGHT - 100,
                        400, 7,
                        min=0, max=100, initial=utils.VOLUME,
                        colour=(100, 100, 100), handleColour=(200, 200, 200), handleRadius=10)
 
 
-class Button(pygame.sprite.Sprite):
-    HOVER_OPACITY = 0.5
-    BORDER_INFLATION_X = 50
-    BORDER_INFLATION_Y = 10
-    BORDER_RADIUS = 5
-
-    def __init__(self, text, text_size, position, function):
-        """Initalizes a button sprite""" #TODO: documentation
-
-
-
-        super().__init__()
-        self.DEFAULT_TEXT = utils.font_menu[text_size].render(text, False, (255, 255, 255))
-        self.HOVER_TEXT = utils.font_menu[text_size].render(text, False, (155, 155, 155))
-
-        self.image = self.DEFAULT_TEXT
-        self.rect = self.image.get_rect(midtop = position)
-
-        self.function = function
-        pass
-
-
-    def update(self, screen, events):
-        # Draw the border rectangle before the group.draw method is called
-
-        if self.rect.collidepoint(pygame.mouse.get_pos()):
-            pygame.draw.rect(screen, (100, 100, 100), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
-            self.image = self.HOVER_TEXT
-
-            for event in events:
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.function()
-
-        else:
-            pygame.draw.rect(screen, (0, 0, 0), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
-            self.image = self.DEFAULT_TEXT
 
 def display_stats(score, fps, volume):
     def display_score(score):
@@ -131,6 +90,7 @@ def display_stats(score, fps, volume):
     display_fps(fps)
     display_volume(volume)
 
+# # # # # # # # # # # # # # # MAIN MENU # # # # # # # # # # # # # # #
 def menu_main():
     player_group = pygame.sprite.GroupSingle()
     player_group.add(Bird())
@@ -179,6 +139,7 @@ def menu_main():
         pygame.display.update()
         clock.tick(MAX_FRAME_RATE) # Setting max framerate
 
+# # # # # # # # # # # # # # # PLAY MENU # # # # # # # # # # # # # # #
 def menu_play():
     player_group = pygame.sprite.GroupSingle()
     player_group.add(Bird())
@@ -226,6 +187,7 @@ def menu_play():
         pygame.display.update()
         clock.tick(MAX_FRAME_RATE) # Setting max framerate
 
+# # # # # # # # # # # # # # # PLAYER GAME # # # # # # # # # # # # # # #
 def game_player():
     gameover = False
     # TODO: highscore
@@ -311,6 +273,11 @@ def game_player():
             if pygame.sprite.collide_mask(player_group.sprite, ground_sprite): # TODO: optimize, new mask each time
                 gameover = True
 
+        # Sky collision (out of bounds)
+        if bird.rect.centery <= 0 and bird.alive:
+            utils.audio_die.play()
+            bird.alive = False
+
         for pipe_to_remove in pipes_to_remove: # Removing off-screen pipes
             pipes.remove(pipe_to_remove)
 
@@ -324,7 +291,7 @@ def game_player():
         clock.tick(MAX_FRAME_RATE) # Setting max framerate
 
 def display_gameover(score, events):
-    gameover = pygame.transform.scale_by(pygame.image.load(get_asset_path("images", "gameover.png")), 2).convert_alpha()
+    gameover = pygame.transform.scale_by(pygame.image.load(get_asset_path("images", "menu", "gameover.png")), 2).convert_alpha()
     gameover_rect = gameover.get_rect(center=(WIN_CENTER_X, WIN_CENTER_Y - 300))
 
     score_shadow = utils.get_shadow_font(13, f"Score: {score}", utils.Font.FB,
@@ -355,8 +322,7 @@ def display_gameover(score, events):
     screen.blit(highscore_shadow["shadow"]["surf"], highscore_shadow["shadow"]["rect"])
     screen.blit(highscore_shadow["base"]["surf"], highscore_shadow["base"]["rect"])
 
-
-
+# # # # # # # # # # # # # # # ARTIFICIAL INTELLIGENCE GAME # # # # # # # # # # # # # # #
 
 def game_ai():
     # TODO: mute volume until a certain threshold of birds left
@@ -372,7 +338,8 @@ def game_ai():
     #         break
     pass
 
-#TODO: Finite state machine to manage scenes (menu, game, ai game)
+
+# # # # # # # # # # # # # # # ENTRY POINT # # # # # # # # # # # # # # #
 def main():
     # utils.audio_die.play(loops = -1)
     menu_main()
