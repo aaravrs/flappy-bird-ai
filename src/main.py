@@ -44,7 +44,6 @@ show_fps = True
 screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Flappy Bird AI")
 
-
 #TODO: organize into "init_menu" function
 
 # The global groups allows a seamless transition between the menu and the game
@@ -69,11 +68,12 @@ volume_slider = Slider(screen, WIN_WIDTH // 2 - (400 / 2), WIN_HEIGHT - 100,
 def display_stats(score, fps, volume):
     def display_score(score):
         if score != None:
-            score_surf = utils.font_fb[12].render(f"{score}", False, (255, 255, 255))
-            score_rect = score_surf.get_rect(center=(WIN_CENTER_X, 100))
-            score_surf_border = pygame.transform.scale_by(utils.font_fb[12].render(f"{score}", False, (0, 0, 0)), 1.1)
-            screen.blit(score_surf_border, score_rect)  # Used to make an outline/shadow effect
-            screen.blit(score_surf, score_rect)
+            score_shadow = utils.get_shadow_font(14, f"{score}", utils.Font.FB,
+                                                 False, (255, 255, 255), (0, 0, 0),
+                                                 (WIN_CENTER_X, 100))
+
+            screen.blit(score_shadow["shadow"]["surf"], score_shadow["shadow"]["rect"])
+            screen.blit(score_shadow["base"]["surf"], score_shadow["base"]["rect"])
 
     def display_fps(fps):
         fps_surf = utils.font_fb[5].render(f"{int(round(fps, 0))}", False, (255, 255, 255))
@@ -99,7 +99,8 @@ def menu_main():
 
     play_button = Button("Play", 12, (WIN_CENTER_X, WIN_CENTER_Y), menu_play)
     customize_button = Button("COMING SOON", 10, (WIN_CENTER_X, WIN_CENTER_Y + 100), menu_play)
-    exit_button = Button("Exit", 7, (WIN_CENTER_X, WIN_CENTER_Y + 200), exit)
+    exit_button = Button("Exit", 7, (WIN_CENTER_X, WIN_CENTER_Y + 200), exit, get_asset_path("images", "bird", "bird_frame_1.png"))
+    # settings_button = Button("Settings", 7, (WIN_CENTER_X, WIN_CENTER_Y + 200), exit, get_asset_path("images", "bird", "bird_frame_1.png"))
 
     button_group = pygame.sprite.Group(
         play_button,
@@ -337,7 +338,6 @@ def game_ai():
     #         next_pipe = pipe
     #         break
     pass
-
 
 # # # # # # # # # # # # # # # ENTRY POINT # # # # # # # # # # # # # # #
 def main():

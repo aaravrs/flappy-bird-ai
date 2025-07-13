@@ -27,18 +27,21 @@ class Button(pygame.sprite.Sprite):
     BORDER_INFLATION_Y = 10
     BORDER_RADIUS = 5
 
-    def __init__(self, text, text_size, position, function):
+    def __init__(self, text, text_size, position, function, button_image_path = None):
         """Initalizes a button sprite""" #TODO: documentation
 
         super().__init__()
-        self.DEFAULT_TEXT = font_menu[text_size].render(text, False, (255, 255, 255))
-        self.HOVER_TEXT = font_menu[text_size].render(text, False, (155, 155, 155))
+        if button_image_path == None:
+            self.DEFAULT_IMAGE = font_menu[text_size].render(text, False, (255, 255, 255))
+            self.HOVER_IMAGE = font_menu[text_size].render(text, False, (155, 155, 155))
+        else:
+            self.DEFAULT_IMAGE = pygame.image.load(button_image_path)
+            self.HOVER_IMAGE = pygame.image.load(button_image_path)
 
-        self.image = self.DEFAULT_TEXT
+        self.image = self.DEFAULT_IMAGE
         self.rect = self.image.get_rect(midtop = position)
 
         self.function = function
-        pass
 
 
     def update(self, screen, events):
@@ -46,7 +49,7 @@ class Button(pygame.sprite.Sprite):
 
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             pygame.draw.rect(screen, (100, 100, 100), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
-            self.image = self.HOVER_TEXT
+            self.image = self.HOVER_IMAGE
 
             for event in events:
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -54,7 +57,7 @@ class Button(pygame.sprite.Sprite):
 
         else:
             pygame.draw.rect(screen, (0, 0, 0), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
-            self.image = self.DEFAULT_TEXT
+            self.image = self.DEFAULT_IMAGE
 
 class Logo(pygame.sprite.Sprite):
     #TODO: make custom (animated) logo
