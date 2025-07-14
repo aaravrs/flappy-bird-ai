@@ -327,7 +327,6 @@ def display_gameover(score, events):
 
 def game_ai():
     # TODO: mute volume until a certain threshold of birds left
-    # TODO: put in ai mode
     # if next_pipe != None:
     #     pygame.draw.line(screen, (255, 0, 0), bird.rect.center,
     #                      next_pipe.top_pipe.rect.midbottom)
