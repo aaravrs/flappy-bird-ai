@@ -22,7 +22,6 @@ def get_asset_path(*parts): # Platform neutral
     return os.path.join("..", "assets", *parts)
 
 class Button(pygame.sprite.Sprite):
-    HOVER_OPACITY = 0.5
     BORDER_INFLATION_X = 50
     BORDER_INFLATION_Y = 10
     BORDER_RADIUS = 5
@@ -58,6 +57,36 @@ class Button(pygame.sprite.Sprite):
         else:
             pygame.draw.rect(screen, (0, 0, 0), self.rect.inflate(Button.BORDER_INFLATION_X, Button.BORDER_INFLATION_Y), border_radius = Button.BORDER_RADIUS)
             self.image = self.DEFAULT_IMAGE
+
+class ToggleButton(pygame.sprite.Sprite):
+    BORDER_INFLATION_X = 30
+    BORDER_INFLATION_Y = 30
+    BORDER_RADIUS = 5
+
+    def __init__(self, position, image_1_path, image_2_path):
+
+        super().__init__()
+        self.IMAGE_1 = pygame.image.load(image_1_path)
+        self.IMAGE_2 = pygame.image.load(image_2_path)
+
+        self.image = self.IMAGE_1
+        self.rect = self.image.get_rect(midtop = position)
+
+    def update(self, screen, events):
+        # Draw the border rectangle before the group.draw method is called
+
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
+            pygame.draw.rect(screen, (100, 100, 100), self.rect.inflate(ToggleButton.BORDER_INFLATION_X, ToggleButton.BORDER_INFLATION_Y), border_radius = ToggleButton.BORDER_RADIUS)
+
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.image == self.IMAGE_1:
+                        self.image = self.IMAGE_2
+                    else:
+                        self.image = self.IMAGE_1
+
+        else:
+            pygame.draw.rect(screen, (0, 0, 0), self.rect.inflate(ToggleButton.BORDER_INFLATION_X, ToggleButton.BORDER_INFLATION_Y), border_radius = ToggleButton.BORDER_RADIUS)
 
 class Logo(pygame.sprite.Sprite):
     #TODO: make custom (animated) logo

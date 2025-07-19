@@ -17,6 +17,7 @@ from pipe import Pipe
 from utils import (
     get_asset_path,
     Button,
+    ToggleButton,
     Logo,
     WIN_WIDTH,
     WIN_HEIGHT,
